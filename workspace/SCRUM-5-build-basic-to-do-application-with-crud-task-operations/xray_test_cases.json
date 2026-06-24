@@ -1,0 +1,407 @@
+[
+  {
+    "summary": "Create task with title and description",
+    "description": "Verifies that a task is successfully created when both title and description are provided, and that the response includes a unique id, status=pending, and a non-null createdAt.",
+    "steps": [
+      {
+        "action": "Send a create task request",
+        "data": "{ \"title\": \"Buy groceries\", \"description\": \"Milk, eggs, bread\" }",
+        "expected_result": "Response contains id (non-null, unique), title=\"Buy groceries\", description=\"Milk, eggs, bread\", status=\"pending\", createdAt (non-null ISO 8601 timestamp)"
+      },
+      {
+        "action": "Send a second create task request",
+        "data": "{ \"title\": \"Walk the dog\", \"description\": \"Evening walk\" }",
+        "expected_result": "Response id differs from the first task's id"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Create task with title only (no description)",
+    "description": "Verifies that a task can be created with only a title; description defaults to null or is omitted from the response.",
+    "steps": [
+      {
+        "action": "Send a create task request with title only",
+        "data": "{ \"title\": \"Read a book\" }",
+        "expected_result": "Task is created with id, title=\"Read a book\", status=\"pending\", createdAt present; description is null or absent"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Create task fails when title is missing",
+    "description": "Verifies that submitting a create request without a title field returns a validation error and no task is persisted.",
+    "steps": [
+      {
+        "action": "Send a create task request without a title",
+        "data": "{ \"description\": \"No title here\" }",
+        "expected_result": "Response is a validation error (e.g., 400 Bad Request); no task is stored"
+      },
+      {
+        "action": "List all tasks",
+        "data": "",
+        "expected_result": "The invalid task does not appear in the list"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Create task fails when title is an empty string",
+    "description": "Verifies that an empty-string title is treated the same as a missing title and is rejected with a validation error.",
+    "steps": [
+      {
+        "action": "Send a create task request with an empty title",
+        "data": "{ \"title\": \"\" }",
+        "expected_result": "Response is a validation error; no task is persisted"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Create task ignores caller-supplied createdAt",
+    "description": "Verifies that if a caller passes a createdAt value it is ignored and the server always assigns its own timestamp.",
+    "steps": [
+      {
+        "action": "Send a create task request including createdAt",
+        "data": "{ \"title\": \"Override timestamp\", \"createdAt\": \"2000-01-01T00:00:00Z\" }",
+        "expected_result": "Task is created; returned createdAt is the server-assigned time, not 2000-01-01T00:00:00Z"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "List tasks returns all created tasks with full metadata",
+    "description": "Verifies that the list endpoint returns every non-deleted task with id, title, description, status, and createdAt fields.",
+    "steps": [
+      {
+        "action": "Create two tasks",
+        "data": "{ \"title\": \"Task A\" } and { \"title\": \"Task B\", \"description\": \"Desc B\" }",
+        "expected_result": "Both tasks are created successfully"
+      },
+      {
+        "action": "Call the list tasks endpoint",
+        "data": "",
+        "expected_result": "Response is an array containing both tasks; each object has id, title, description, status, and createdAt"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "List tasks returns empty array when no tasks exist",
+    "description": "Verifies that listing tasks on an empty store returns [] without an error.",
+    "steps": [
+      {
+        "action": "Ensure the task store is empty (fresh state or all tasks deleted)",
+        "data": "",
+        "expected_result": "Store contains no tasks"
+      },
+      {
+        "action": "Call the list tasks endpoint",
+        "data": "",
+        "expected_result": "Response is an empty array [] with a success status code (e.g., 200)"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task title",
+    "description": "Verifies that updating the title of an existing task persists the change and returns the updated task object.",
+    "steps": [
+      {
+        "action": "Create a task",
+        "data": "{ \"title\": \"Original title\" }",
+        "expected_result": "Task created; note returned id"
+      },
+      {
+        "action": "Send an update request for the task id with a new title",
+        "data": "{ \"title\": \"Updated title\" }",
+        "expected_result": "Response contains the task with title=\"Updated title\"; all other fields unchanged"
+      },
+      {
+        "action": "List all tasks",
+        "data": "",
+        "expected_result": "The task appears with title=\"Updated title\""
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task description",
+    "description": "Verifies that updating the description of an existing task persists the change.",
+    "steps": [
+      {
+        "action": "Create a task without a description",
+        "data": "{ \"title\": \"No desc\" }",
+        "expected_result": "Task created; description is null/absent"
+      },
+      {
+        "action": "Send an update request with a new description",
+        "data": "{ \"description\": \"Now has a description\" }",
+        "expected_result": "Response contains description=\"Now has a description\""
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task status from pending to completed",
+    "description": "Verifies that a task status can be changed from pending to completed and the updated object is returned.",
+    "steps": [
+      {
+        "action": "Create a task",
+        "data": "{ \"title\": \"Finish report\" }",
+        "expected_result": "Task created with status=\"pending\""
+      },
+      {
+        "action": "Send an update request to change status",
+        "data": "{ \"status\": \"completed\" }",
+        "expected_result": "Response contains the task with status=\"completed\""
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task status from completed back to pending",
+    "description": "Verifies that a completed task can be reverted to pending.",
+    "steps": [
+      {
+        "action": "Create a task and update its status to completed",
+        "data": "{ \"title\": \"Revert me\" } then update { \"status\": \"completed\" }",
+        "expected_result": "Task status is completed"
+      },
+      {
+        "action": "Send an update request to set status back to pending",
+        "data": "{ \"status\": \"pending\" }",
+        "expected_result": "Response contains the task with status=\"pending\""
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task fails for non-existent id",
+    "description": "Verifies that updating a task with an unknown id returns a 404-equivalent error and no data is modified.",
+    "steps": [
+      {
+        "action": "Send an update request with an id that does not exist",
+        "data": "id = \"nonexistent-id-99999\", body = { \"title\": \"Ghost update\" }",
+        "expected_result": "Response is a not-found error (e.g., 404); no task is created or modified"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task fails for invalid status value",
+    "description": "Verifies that setting status to a value other than pending or completed is rejected with a validation error.",
+    "steps": [
+      {
+        "action": "Create a task",
+        "data": "{ \"title\": \"Status test\" }",
+        "expected_result": "Task created with status=\"pending\""
+      },
+      {
+        "action": "Send an update request with an invalid status",
+        "data": "{ \"status\": \"in-progress\" }",
+        "expected_result": "Response is a validation error; task status remains \"pending\""
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task fails or no-ops when no fields are provided",
+    "description": "Verifies that submitting an update request with an empty body returns an informative error or a no-op response rather than silently succeeding.",
+    "steps": [
+      {
+        "action": "Create a task",
+        "data": "{ \"title\": \"Empty update test\" }",
+        "expected_result": "Task created"
+      },
+      {
+        "action": "Send an update request with an empty body",
+        "data": "{}",
+        "expected_result": "Response is either a validation error or an unchanged task with an informative message; no crash"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task does not change createdAt",
+    "description": "Verifies that createdAt is immutable and cannot be overwritten via an update call.",
+    "steps": [
+      {
+        "action": "Create a task and note its createdAt value",
+        "data": "{ \"title\": \"Immutable timestamp\" }",
+        "expected_result": "Task created; record original createdAt"
+      },
+      {
+        "action": "Send an update request that includes a new createdAt",
+        "data": "{ \"createdAt\": \"2000-01-01T00:00:00Z\" }",
+        "expected_result": "Response createdAt equals the original server-assigned value, not 2000-01-01T00:00:00Z"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Delete task with valid id",
+    "description": "Verifies that a task is removed from the store after a delete request and no longer appears in the list.",
+    "steps": [
+      {
+        "action": "Create a task",
+        "data": "{ \"title\": \"Delete me\" }",
+        "expected_result": "Task created; note returned id"
+      },
+      {
+        "action": "Send a delete request for the task id",
+        "data": "id of the task just created",
+        "expected_result": "Response is a success confirmation or 204 No Content"
+      },
+      {
+        "action": "List all tasks",
+        "data": "",
+        "expected_result": "The deleted task is not present in the response"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Delete task fails gracefully for non-existent id",
+    "description": "Verifies that deleting with an unknown id returns a graceful error and does not crash the system.",
+    "steps": [
+      {
+        "action": "Send a delete request with an id that does not exist",
+        "data": "id = \"nonexistent-id-99999\"",
+        "expected_result": "Response is a structured not-found error; system remains operational"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Delete task fails gracefully for malformed id",
+    "description": "Verifies that a malformed or wrong-type id on a delete request returns a graceful error rather than an unhandled exception.",
+    "steps": [
+      {
+        "action": "Send a delete request with a malformed id",
+        "data": "id = null / undefined / special characters / extremely long string",
+        "expected_result": "Response is a structured error; no crash or unhandled exception"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Deleted task is excluded from list results",
+    "description": "Verifies end-to-end that after deletion the list endpoint no longer returns the removed task while other tasks remain.",
+    "steps": [
+      {
+        "action": "Create two tasks",
+        "data": "{ \"title\": \"Keep me\" } and { \"title\": \"Remove me\" }",
+        "expected_result": "Both tasks exist; note their ids"
+      },
+      {
+        "action": "Delete the second task",
+        "data": "id of \"Remove me\" task",
+        "expected_result": "Delete succeeds"
+      },
+      {
+        "action": "List all tasks",
+        "data": "",
+        "expected_result": "Only \"Keep me\" is present; \"Remove me\" is absent"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Task ids are unique across multiple creates",
+    "description": "Verifies that each create operation produces a distinct id and no two tasks share the same id.",
+    "steps": [
+      {
+        "action": "Create five tasks in sequence",
+        "data": "titles: Task 1 through Task 5",
+        "expected_result": "All five tasks are created successfully"
+      },
+      {
+        "action": "Collect the ids from all five responses",
+        "data": "",
+        "expected_result": "All five ids are distinct (no duplicates)"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Newly created task always has status pending",
+    "description": "Verifies that the status field is always initialized to pending regardless of any status value passed on create.",
+    "steps": [
+      {
+        "action": "Create a task without specifying status",
+        "data": "{ \"title\": \"Default status\" }",
+        "expected_result": "Returned task has status=\"pending\""
+      },
+      {
+        "action": "Attempt to create a task with status set to completed",
+        "data": "{ \"title\": \"Force completed\", \"status\": \"completed\" }",
+        "expected_result": "Task is created with status=\"pending\" (caller-supplied status ignored) OR a validation error is returned"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  }
+]

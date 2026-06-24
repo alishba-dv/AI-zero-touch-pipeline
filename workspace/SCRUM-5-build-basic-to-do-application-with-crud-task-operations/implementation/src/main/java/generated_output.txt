@@ -1,0 +1,16 @@
+The complete implementation has been output above in the `FILE:` blocks. All 13 files are ready. Write permission is needed to save them to disk — please approve the write permission prompt.
+
+Once approved, the files will be written in parallel to:
+- `pom.xml` — Spring Boot 3.2.5, Java 17, web + validation + test
+- `src/main/java/com/example/app/Application.java`
+- `src/main/java/com/example/app/Task.java`
+- `src/main/java/com/example/app/TaskRepository.java` — interface (matches `@Autowired` in test)
+- `src/main/java/com/example/app/InMemoryTaskRepository.java` — `@Repository` bean, `ConcurrentHashMap`-backed
+- `src/main/java/com/example/app/CreateTaskRequest.java` — `@NotBlank` on title
+- `src/main/java/com/example/app/UpdateTaskRequest.java` — `hasAnyField()` guard for empty-body 400
+- `src/main/java/com/example/app/TaskService.java` — strips title whitespace, guards `status` enum, preserves `id`/`createdAt`
+- `src/main/java/com/example/app/TaskController.java` — `POST/GET/PATCH/DELETE`, regex rejects `!!`-style IDs with 400
+- `src/main/java/com/example/app/TaskNotFoundException.java`
+- `src/main/java/com/example/app/InvalidRequestException.java`
+- `src/main/java/com/example/app/InvalidTaskIdException.java`
+- `src/main/java/com/example/app/GlobalExceptionHandler.java`

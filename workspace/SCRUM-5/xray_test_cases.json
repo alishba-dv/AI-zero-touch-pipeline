@@ -1,0 +1,392 @@
+[
+  {
+    "summary": "Create task with title only returns 201 and pending status",
+    "description": "Verifies AC-1: POST /tasks with a valid title returns a system-generated id, createdAt, and status=pending with HTTP 201.",
+    "steps": [
+      {
+        "action": "Send POST request to /tasks",
+        "data": "{\"title\": \"Buy milk\"}",
+        "expected_result": "HTTP 201; response body contains id (non-null), title='Buy milk', status='pending', createdAt (ISO 8601 timestamp), description absent or null"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Create task with title and description returns full task object",
+    "description": "Verifies that an optional description is stored and returned when provided on task creation.",
+    "steps": [
+      {
+        "action": "Send POST request to /tasks",
+        "data": "{\"title\": \"Buy milk\", \"description\": \"2% fat, 1 litre\"}",
+        "expected_result": "HTTP 201; response body contains the provided title and description alongside system-generated id, status='pending', and createdAt"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Create task without title returns 400",
+    "description": "Verifies AC-2 / E2: POST /tasks with no title field returns HTTP 400 and does not persist a task.",
+    "steps": [
+      {
+        "action": "Send POST request to /tasks with body missing the title field",
+        "data": "{}",
+        "expected_result": "HTTP 400; no task is created; error response body contains a meaningful message"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Create task with empty title returns 400",
+    "description": "Verifies E1: POST /tasks where title is an empty string is rejected with HTTP 400.",
+    "steps": [
+      {
+        "action": "Send POST request to /tasks with an empty title",
+        "data": "{\"title\": \"\"}",
+        "expected_result": "HTTP 400; task is not persisted; error message indicates title is required"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Create task with whitespace-only title returns 400",
+    "description": "Verifies E1: A title consisting entirely of whitespace is treated as empty and rejected.",
+    "steps": [
+      {
+        "action": "Send POST request to /tasks with a whitespace-only title",
+        "data": "{\"title\": \"   \"}",
+        "expected_result": "HTTP 400; task is not persisted; error message indicates title cannot be blank"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Create task with no request body returns 400",
+    "description": "Verifies E2: POST /tasks with a completely absent body is rejected gracefully.",
+    "steps": [
+      {
+        "action": "Send POST request to /tasks with no body",
+        "data": "(empty body)",
+        "expected_result": "HTTP 400; meaningful error response; no task is created"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Duplicate titles are allowed on task creation",
+    "description": "Verifies E9: Two tasks may share the same title; uniqueness is enforced on id only.",
+    "steps": [
+      {
+        "action": "Send POST /tasks twice with the same title",
+        "data": "{\"title\": \"Buy milk\"} (sent twice)",
+        "expected_result": "Both requests return HTTP 201; each task has a distinct id; both tasks appear in GET /tasks"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "List all tasks returns all created tasks with full metadata",
+    "description": "Verifies AC-3: GET /tasks returns an array containing every previously created task including id, title, description, status, and createdAt.",
+    "steps": [
+      {
+        "action": "Create two tasks via POST /tasks, then send GET /tasks",
+        "data": "Task 1: {\"title\": \"Task A\"}, Task 2: {\"title\": \"Task B\", \"description\": \"desc\"}",
+        "expected_result": "HTTP 200; response is a JSON array of length 2; each element contains id, title, description, status, and createdAt"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "List tasks on empty store returns empty array",
+    "description": "Verifies AC-4 / E8: GET /tasks when no tasks exist returns [] with HTTP 200, not an error.",
+    "steps": [
+      {
+        "action": "Ensure the task store is empty, then send GET /tasks",
+        "data": "(empty store)",
+        "expected_result": "HTTP 200; response body is [] (empty JSON array)"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task status to completed returns updated task",
+    "description": "Verifies AC-5: PATCH /tasks/{id} with status=completed returns the updated task object.",
+    "steps": [
+      {
+        "action": "Create a task via POST /tasks, note the returned id, then send PATCH /tasks/{id}",
+        "data": "{\"status\": \"completed\"}",
+        "expected_result": "HTTP 200; response contains the same id with status='completed'; title and createdAt are unchanged"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Updated status is reflected in subsequent list",
+    "description": "Verifies AC-5 (persistence): After updating a task, GET /tasks reflects the new status.",
+    "steps": [
+      {
+        "action": "Create a task, update its status to 'completed' via PATCH, then call GET /tasks",
+        "data": "PATCH body: {\"status\": \"completed\"}",
+        "expected_result": "The task appears in the list with status='completed'"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task title only leaves other fields unchanged",
+    "description": "Verifies PATCH semantics (A6): updating only the title does not erase description or change status.",
+    "steps": [
+      {
+        "action": "Create a task with title and description; PATCH /tasks/{id} with a new title only",
+        "data": "{\"title\": \"New Title\"}",
+        "expected_result": "HTTP 200; title is updated; description and status remain as originally set"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task description only leaves other fields unchanged",
+    "description": "Verifies PATCH semantics: updating only description does not alter title or status.",
+    "steps": [
+      {
+        "action": "Create a task; PATCH /tasks/{id} with a new description only",
+        "data": "{\"description\": \"Updated description\"}",
+        "expected_result": "HTTP 200; description is updated; title and status are unchanged"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update non-existent task returns 404",
+    "description": "Verifies AC-6 / E3: PATCH /tasks/{id} where id does not match any task returns HTTP 404.",
+    "steps": [
+      {
+        "action": "Send PATCH request with an id that was never created",
+        "data": "PATCH /tasks/nonexistent-id with {\"status\": \"completed\"}",
+        "expected_result": "HTTP 404; meaningful error message; no side effects on existing tasks"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task with invalid status value returns 400",
+    "description": "Verifies AC-7 / E6: status values outside the allowed enum (pending|completed) are rejected.",
+    "steps": [
+      {
+        "action": "Create a task; send PATCH /tasks/{id} with an unsupported status",
+        "data": "{\"status\": \"in-progress\"}",
+        "expected_result": "HTTP 400; task status is not changed; error response indicates invalid status value"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update task with empty body returns 400",
+    "description": "Verifies E7: A PATCH request with no updateable fields is rejected rather than silently accepted.",
+    "steps": [
+      {
+        "action": "Create a task; send PATCH /tasks/{id} with an empty JSON body",
+        "data": "{}",
+        "expected_result": "HTTP 400; error response indicates no valid fields were provided"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update request ignores immutable id field",
+    "description": "Verifies E10 / AC-10: Attempts to change id via PATCH are silently ignored or rejected; the stored id is unchanged.",
+    "steps": [
+      {
+        "action": "Create a task; note its id; send PATCH /tasks/{id} including a different id in the body",
+        "data": "{\"id\": \"hacked-id\", \"title\": \"Modified\"}",
+        "expected_result": "HTTP 200 (or 400); the task's id in the store is identical to the original; title update may apply"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update request ignores immutable createdAt field",
+    "description": "Verifies E10 / AC-10: Attempts to change createdAt via PATCH are silently ignored; timestamp is unchanged.",
+    "steps": [
+      {
+        "action": "Create a task; note its createdAt; send PATCH /tasks/{id} with a different createdAt value",
+        "data": "{\"createdAt\": \"2000-01-01T00:00:00Z\", \"title\": \"Modified\"}",
+        "expected_result": "createdAt in the response and in GET /tasks matches the original system-generated value"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Delete existing task returns 204 and removes it from list",
+    "description": "Verifies AC-8: DELETE /tasks/{id} returns HTTP 204 and the task no longer appears in GET /tasks.",
+    "steps": [
+      {
+        "action": "Create a task; note its id; send DELETE /tasks/{id}; then call GET /tasks",
+        "data": "DELETE /tasks/{id}",
+        "expected_result": "DELETE returns HTTP 204 with no body; GET /tasks response does not contain the deleted task's id"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Delete non-existent task returns 404",
+    "description": "Verifies AC-9 / E4: DELETE /tasks/{id} where id does not exist returns HTTP 404 with a meaningful error.",
+    "steps": [
+      {
+        "action": "Send DELETE request with an id that was never created",
+        "data": "DELETE /tasks/nonexistent-id",
+        "expected_result": "HTTP 404; meaningful error message; no other tasks are affected"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Delete task with malformed id returns 400",
+    "description": "Verifies E5: A DELETE request with an id of the wrong type or format returns HTTP 400.",
+    "steps": [
+      {
+        "action": "Send DELETE /tasks/{id} with a malformed id (e.g. special characters, wrong type)",
+        "data": "DELETE /tasks/!!!invalid!!!",
+        "expected_result": "HTTP 400; error response indicates invalid id format; no tasks are modified"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "id is unique across multiple created tasks",
+    "description": "Verifies data integrity requirement: every created task receives a distinct system-assigned id.",
+    "steps": [
+      {
+        "action": "Create five tasks in sequence via POST /tasks",
+        "data": "Five requests each with {\"title\": \"Task N\"} where N is 1\u20135",
+        "expected_result": "All five response objects have distinct, non-null id values"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "createdAt is a valid ISO 8601 timestamp and not user-supplied",
+    "description": "Verifies data integrity requirement: createdAt is system-generated, not accepted from the request body.",
+    "steps": [
+      {
+        "action": "Send POST /tasks with title only (no createdAt field in body)",
+        "data": "{\"title\": \"Timestamp test\"}",
+        "expected_result": "Response createdAt is a valid ISO 8601 datetime string matching the approximate server time; the field was not echoed from the request"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "New task default status is pending",
+    "description": "Verifies that every newly created task has status='pending' regardless of whether a status field is supplied in the request.",
+    "steps": [
+      {
+        "action": "Send POST /tasks without a status field",
+        "data": "{\"title\": \"Default status check\"}",
+        "expected_result": "Response status equals 'pending'"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "Update status back from completed to pending is allowed",
+    "description": "Verifies that the status field can be toggled in both directions within the allowed enum.",
+    "steps": [
+      {
+        "action": "Create a task; set status to 'completed'; then PATCH again with status='pending'",
+        "data": "Second PATCH body: {\"status\": \"pending\"}",
+        "expected_result": "HTTP 200; status returns to 'pending'; all other fields unchanged"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  },
+  {
+    "summary": "id and createdAt are identical before and after update",
+    "description": "Verifies AC-10: Immutable fields retain their original values after a successful PATCH operation.",
+    "steps": [
+      {
+        "action": "Create a task; record id and createdAt; PATCH the task to change title and status; compare id and createdAt",
+        "data": "PATCH body: {\"title\": \"Changed\", \"status\": \"completed\"}",
+        "expected_result": "id and createdAt in the PATCH response exactly match the values from the original POST response"
+      }
+    ],
+    "labels": [
+      "auto-generated"
+    ],
+    "linked_issue": "SCRUM-5"
+  }
+]
